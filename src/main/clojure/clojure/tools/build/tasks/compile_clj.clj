@@ -80,15 +80,16 @@
 (defn compile-clj
   [{:keys [basis src-dirs compile-opts ns-compile filter-nses class-dir sort bindings] :as params
     :or {sort :topo}}]
-  (let [working-dir (.toFile (Files/createTempDirectory "compile-clj" (into-array FileAttribute [])))
+  (let [#_ #_ working-dir (.toFile (Files/createTempDirectory "compile-clj" (into-array FileAttribute [])))
         compile-dir-file (file/ensure-dir (api/resolve-path class-dir))
+        working-dir compile-dir-file
         clj-paths (map api/resolve-path (or src-dirs (basis-paths basis)))
         nses (cond
                (seq ns-compile) ns-compile
                (= sort :topo) (nses-in-topo clj-paths)
                (= sort :bfs) (nses-in-bfs clj-paths)
                :else (throw (ex-info "Missing :ns-compile or :sort order in compile-clj task" {})))
-        working-compile-dir (file/ensure-dir (jio/file working-dir "compile-clj"))
+        working-compile-dir working-dir #_(file/ensure-dir (jio/file working-dir "compile-clj"))
         compile-script (jio/file working-dir "compile.clj")
         _ (write-compile-script! compile-script working-compile-dir nses compile-opts bindings)
 
@@ -100,13 +101,16 @@
                                               :basis basis
                                               :main 'clojure.main
                                               :main-args [(.getCanonicalPath compile-script)]}))
-        _ (spit (jio/file working-dir "compile.args") (str/join " " (:command-args process-args)))
+        compile-args (spit (jio/file working-dir "compile.args") (str/join " " (:command-args process-args)))
         exit (:exit (process/process process-args))]
     (if (zero? exit)
       (do
-        (if (seq filter-nses)
+        ;; NOTE: this disables filter-nses.
+        #_(if (seq filter-nses)
           (file/copy-contents working-compile-dir compile-dir-file (map ns->path filter-nses))
           (file/copy-contents working-compile-dir compile-dir-file))
         ;; only delete on success, otherwise leave the evidence!
-        (file/delete working-dir))
+       #_ (file/delete working-dir)
+        (file/delete compile-script)
+        #_(file/delete compile-args))
       (throw (ex-info (str "Clojure compilation failed, working dir preserved: " (.toString working-dir)) {})))))

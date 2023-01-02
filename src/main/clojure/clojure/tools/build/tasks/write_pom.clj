@@ -14,8 +14,8 @@
     [clojure.data.xml.tree :as tree]
     [clojure.data.xml.event :as event]
     [clojure.zip :as zip]
-    [clojure.tools.deps.alpha.util.maven :as maven]
-    [clojure.tools.deps.alpha.util.io :refer [printerrln]]
+    [clojure.tools.deps.util.maven :as maven]
+    [clojure.tools.deps.util.io :refer [printerrln]]
     [clojure.tools.build.api :as api]
     [clojure.tools.build.util.file :as file])
   (:import [clojure.data.xml.node Element]
@@ -68,11 +68,20 @@
   [::pom/resources
    (map to-resource rpaths)])
 
+(defn- to-repo-policy
+  [parent-tag {:keys [enabled update checksum]}]
+  [parent-tag
+   (when (some? enabled) [::pom/enabled (str enabled)])
+   (when update [::pom/updatePolicy (if (keyword? update) (name update) (str "interval:" update))])
+   (when checksum [::pom/checksumPolicy (name checksum)])])
+
 (defn- to-repo
-  [[name repo]]
+  [[name {:keys [url snapshots releases]}]]
   [::pom/repository
    [::pom/id name]
-   [::pom/url (:url repo)]])
+   [::pom/url url]
+   (when releases (to-repo-policy ::pom/releases releases))
+   (when snapshots (to-repo-policy ::pom/snapshots snapshots))])
 
 (defn- gen-repos
   [repos]

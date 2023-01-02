@@ -8,7 +8,6 @@
 
 (ns clojure.tools.build.tasks.uber
   (:require
-    [clojure.edn :as edn]
     [clojure.java.io :as jio]
     [clojure.pprint :as pprint]
     [clojure.set :as set]
@@ -85,11 +84,16 @@
 
 (defn conflict-data-readers
   [{:keys [path in ^File existing]}]
-  (let [existing-str (slurp existing)
-        existing-reader-fns (edn/read-string existing-str)
-        append-reader-fns (edn/read-string (stream->string in))
-        reader-str (with-out-str (pprint/pprint (merge existing-reader-fns append-reader-fns)))]
-    {:write {path {:string reader-str}}}))
+  (binding [*read-eval* false]
+    (let [existing-str (slurp existing)
+          existing-reader-fns (read-string 
+                               {:read-cond :preserve :features #{:clj}} 
+                               existing-str)
+          append-reader-fns (read-string 
+                             {:read-cond :preserve :features #{:clj}} 
+                             (stream->string in))
+          reader-str (with-out-str (pprint/pprint (merge existing-reader-fns append-reader-fns)))]
+      {:write {path {:string reader-str}}})))
 
 (defn- conflict-warn
   [{:keys [path lib]}]
@@ -220,7 +224,7 @@
     :else (throw (ex-info (str "Invalid handler: " handler) {}))))
 
 (def ^:private default-handlers
-  {"^data_readers.clj[cs]?$" :data-readers
+  {"^data_readers.clj[c]?$" :data-readers
    "^META-INF/services/.*" :append
    "(?i)^(META-INF/)?(COPYRIGHT|NOTICE|LICENSE)(\\.(txt|md))?$" :append-dedupe
    :default :ignore})

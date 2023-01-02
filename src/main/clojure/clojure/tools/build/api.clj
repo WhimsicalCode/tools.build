@@ -24,6 +24,11 @@
   [root]
   (alter-var-root #'*project-root* (constantly root)))
 
+(defmacro with-project-root
+  "Execute forms in a bound project path (string) other than the default (\".\")"
+  [path & forms]
+  `(binding [*project-root* ~path] ~@forms))
+
 (defn resolve-path
   "If path is absolute or root-path is nil then return path,
   otherwise resolve relative to *project-root*."
@@ -165,7 +170,7 @@
   context of the *project-root* directory.
 
   Options:
-    :java-cmd - Java command, default = \"java\"
+    :java-cmd - Java command, default = $JAVA_CMD or 'java' on $PATH, or $JAVA_HOME/bin/java
     :cp - coll of string classpath entries, used first (if provided)
     :basis - runtime basis used for classpath, used last (if provided)
     :java-opts - coll of string jvm opts
@@ -294,7 +299,7 @@
     :filter-nses - coll of symbols representing a namespace prefix to include
 
   Additional options flow to the forked process doing the compile:
-    :java-cmd - Java command, default = \"java\"
+    :java-cmd - Java command, default = $JAVA_CMD or 'java' on $PATH, or $JAVA_HOME/bin/java
     :java-opts - coll of string jvm opts
     :use-cp-file - one of:
                      :auto (default) - use only if os=windows && Java >= 9 && command length >= 8k
@@ -468,7 +473,7 @@
     :error - throw an error
 
   Default conflict handlers map:
-    {\"^data_readers.clj[cs]?$\" :data-readers
+    {\"^data_readers.clj[c]?$\" :data-readers
      \"^META-INF/services/.*\" :append
      \"(?i)^(META-INF/)?(COPYRIGHT|NOTICE|LICENSE)(\\\\.(txt|md))?$\" :append-dedupe
      :default :ignore}"

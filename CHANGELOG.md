@@ -1,6 +1,18 @@
 Changelog
 ===========
 
+* v0.9.0 8c93e0c on Dec 22, 2022
+  * Add clojure.tools.build.api/with-project-root macro
+  * java-command, compile-clj - TBUILD-34 - Use Clojure CLI logic in finding Java executable
+  * Switch to tools.deps 0.16.1264
+* v0.8.5 9c738da on Nov 14, 2022
+  * Add support for snapshot and release policies on :mvn/repos (see TDEPS-101)
+* v0.8.4 8c3cd69 on Nov 3, 2022
+  * TBUILD-26 Released as a Maven artifact
+* v0.8.3 0d20256 on Jun 28, 2022
+  * uber - TBUILD-32 - Preserve reader conditionals when merging data\_readers.cljc
+  * uber - TBUILD-33 - Adjust regex for data\_readers to omit .cljs
+  * Update to tools.deps.alpha 0.14.1212
 * v0.8.2 ba1a2bf on May 6, 2022
   * Update deps to latest
 * v0.8.1 7d40500 on Mar 11, 2022
